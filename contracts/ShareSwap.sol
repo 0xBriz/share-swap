@@ -4,8 +4,6 @@ pragma solidity 0.8.4;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "hardhat/console.sol";
-
 contract ShareSwap is Ownable {
     using SafeERC20 for IERC20;
 
@@ -28,7 +26,7 @@ contract ShareSwap is Ownable {
     // Ability to toggle swap on/off if needed
     bool public swapEnabled = true;
 
-    uint256 public swapEpochLength = 1 weeks; // TODO: 1 WEEK
+    uint256 public swapEpochLength = 1 weeks;
 
     uint256 public maxAaltoPerEpoch = 1000;
 
@@ -89,17 +87,7 @@ contract ShareSwap is Ownable {
             "Contract Aalto balance too low"
         );
 
-        console.log(
-            "lastTimeSwap + swapEpochLength",
-            lastTimeSwap + swapEpochLength
-        );
-        console.log(
-            "lastTimeSwap - swapEpochLength",
-            lastTimeSwap - swapEpochLength
-        );
-        console.log("block.timestamp", block.timestamp);
-
-        if (lastTimeSwap - swapEpochLength >= block.timestamp) {
+        if (block.timestamp >= lastTimeSwap + swapEpochLength) {
             currentAaltoForEpoch = 0;
         }
 
