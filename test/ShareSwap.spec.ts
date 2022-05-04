@@ -111,8 +111,6 @@ describe("ShareSwap", () => {
 
     const maxAmount = await shareSwap.maxAaltoPerEpoch();
 
-    console.log(maxAmount);
-
     // Fund test user with share token to cause overflow
     const userOneAmount = maxAmount.toNumber() / 2;
     const userTwoAmount = maxAmount.toNumber() / 2;
