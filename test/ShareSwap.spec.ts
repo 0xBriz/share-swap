@@ -52,7 +52,7 @@ describe("ShareSwap", () => {
     shareSwap = await swap.deployed();
   });
 
-  const testUserShareAmount = 10;
+  const testUserShareAmount = ethers.utils.parseUnits("0.1");
 
   async function exchangeFunds() {
     // Fund contract with aalto
@@ -62,6 +62,17 @@ describe("ShareSwap", () => {
     await ASHARE.transfer(testUser.address, testUserShareAmount);
     await ASHARE.transfer(testUserTwo.address, testUserShareAmount);
   }
+
+  it("should swap share for aalto", async () => {
+    await exchangeFunds();
+
+    await ASHARE.connect(testUser).approve(
+      shareSwap.address,
+      ethers.constants.MaxUint256
+    );
+
+    await shareSwap.connect(testUser).swap(testUserShareAmount);
+  });
 
   it("Should revert when swap not enabled", async () => {
     await shareSwap.setSwapEnabled(false);
@@ -92,6 +103,8 @@ describe("ShareSwap", () => {
 
     const maxAmount = await shareSwap.maxAaltoPerEpoch();
 
+    console.log(maxAmount);
+
     // Fund test user with share token to cause overflow
     await ASHARE.transfer(testUser.address, maxAmount);
 
@@ -106,33 +119,23 @@ describe("ShareSwap", () => {
     ).to.be.revertedWith("Over max per epoch");
   });
 
-  it("Should revert if amount is over max per epoch", async () => {
-    await exchangeFunds();
-
-    const maxAmount = await shareSwap.maxAaltoPerEpoch();
-
-    // Fund test user with share token to cause overflow
-    const userOneAmount = maxAmount.toNumber() / 2;
-    const userTwoAmount = maxAmount.toNumber() / 2;
-    await ASHARE.transfer(testUser.address, userOneAmount);
-    await ASHARE.transfer(testUserTwo.address, userTwoAmount);
+  it("Should ", async () => {
+    // await exchangeFunds();
 
     // approve ShareSwap
     await ASHARE.connect(testUser).approve(
       shareSwap.address,
       ethers.constants.MaxUint256
     );
-    await ASHARE.connect(testUserTwo).approve(
-      shareSwap.address,
-      ethers.constants.MaxUint256
-    );
 
-    await expect(shareSwap.connect(testUser).swap(userOneAmount)).to.not.be
-      .reverted;
+    await AALTO.transfer(shareSwap.address, AALTO_FOR_SWAP_AMOUNT);
+    // Fund test user with share token to cause overflow
+    // const userOneAmount = maxAmount.div(aaltoPerShare);
+    const userOneAmount = ethers.utils.parseUnits("1");
+    await ASHARE.transfer(testUser.address, userOneAmount);
 
-    await expect(
-      shareSwap.connect(testUserTwo).swap(userTwoAmount)
-    ).to.be.revertedWith("Over max per epoch");
+    await shareSwap.connect(testUser).swap(userOneAmount);
+    console.log(format(await AALTO.balanceOf(testUser.address)));
   });
 
   it("Should reset the shares swap cap for a new epoch", async () => {
@@ -194,7 +197,7 @@ describe("ShareSwap", () => {
     const burnAmount = await ASHARE.balanceOf(
       "0x000000000000000000000000000000000000dEaD"
     );
-    expect(burnAmount).to.equal(testUserShareAmount / 2);
+    expect(burnAmount).to.equal(testUserShareAmount.div(2));
   });
 
   it("Should send half of share amount to treasury", async () => {
@@ -208,7 +211,7 @@ describe("ShareSwap", () => {
 
     await shareSwap.connect(testUser).swap(testUserShareAmount);
     const treasuryAmount = await ASHARE.balanceOf(treasuryAddress);
-    expect(treasuryAmount).to.equal(testUserShareAmount / 2);
+    expect(treasuryAmount).to.equal(testUserShareAmount.div(2));
   });
 
   it("Should give the user the proper aalto amount", async () => {

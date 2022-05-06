@@ -18,17 +18,19 @@ contract ShareSwap is Ownable {
     address private constant BURN_ADDRESS =
         0x000000000000000000000000000000000000dEaD;
 
-    uint256 public aaltoPerShare = 2;
+    uint256 public constant DECIMALS = 10**18;
+
+    uint256 public aaltoPerShare = 2 * DECIMALS;
 
     // Prevent fat finger
-    uint256 private constant MAX_AALTO_PER_SHARE = 5;
+    uint256 private constant MAX_AALTO_PER_SHARE = 5 * DECIMALS;
 
     // Ability to toggle swap on/off if needed
     bool public swapEnabled = true;
 
     uint256 public swapEpochLength = 1 weeks;
 
-    uint256 public maxAaltoPerEpoch = 1000;
+    uint256 public maxAaltoPerEpoch = 1000 * DECIMALS;
 
     uint256 public currentAaltoForEpoch;
 
@@ -81,7 +83,8 @@ contract ShareSwap is Ownable {
         );
 
         // Make sure we have enough to satisfy the exchange
-        uint256 userAaltoAmount = _shareAmount * aaltoPerShare;
+        uint256 userAaltoAmount = (_shareAmount * aaltoPerShare) / DECIMALS;
+
         require(
             aaltoToken.balanceOf(address(this)) >= userAaltoAmount,
             "Contract Aalto balance too low"
@@ -91,7 +94,7 @@ contract ShareSwap is Ownable {
             currentAaltoForEpoch = 0;
         }
 
-        currentAaltoForEpoch += _shareAmount;
+        currentAaltoForEpoch += userAaltoAmount;
 
         require(currentAaltoForEpoch < maxAaltoPerEpoch, "Over max per epoch");
 
